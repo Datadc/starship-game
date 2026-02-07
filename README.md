@@ -1,35 +1,38 @@
 # Starship Game - C++ Game Library
 
-A classic asteroids-style space shooter game implemented as a C++ library with a terminal-based demo.
+A classic asteroids-style space shooter game implemented in C++ with SDL2 graphics rendering.
 
 ## Features
 
 - **Object-oriented design** with clean separation of concerns
-- **Physics-based movement** with momentum and screen wrapping
+- **Real-time SDL2 graphics** with detailed rocket sprite rendering
 - **Collision detection** using circular bounding boxes
-- **Progressive difficulty** with level advancement
-- **Terminal-based renderer** for quick testing (no external dependencies)
+- **Progressive difficulty** with level-scaled asteroid spawning
+- **Continuous wave spawning** with asteroids appearing at top of screen
+- **Score and lives tracking** with HUD display
+- **Detailed rocket graphics** with nose cone, body, fins, and flame effects
+- **Game-over screen** with final statistics
 - **Extensible architecture** - easily add new entity types or renderers
 
 ## Project Structure
 
 ```
 starship-game/
-├── include/starship/       # Public header files
-│   ├── vector2d.hpp       # 2D vector math
-│   ├── entity.hpp         # Base entity class
-│   ├── starship.hpp       # Player ship
-│   ├── asteroid.hpp       # Asteroid objects
-│   ├── projectile.hpp     # Bullets
-│   └── game.hpp           # Main game logic
-├── src/                   # Implementation files
-│   └── game.cpp
-├── examples/              # Example programs
-│   └── main.cpp          # Terminal-based game
-└── CMakeLists.txt        # Build configuration
+├── include/starship/          # Public header files
+│   ├── Vector2D.hxx           # 2D vector math library
+│   ├── entity.hxx             # Base entity class
+│   ├── starship.hxx           # Player rocket
+│   ├── asteroid.hxx           # Asteroid objects with size tiers
+│   ├── projectile.hxx         # Projectiles (bullets)
+│   └── game.hxx               # Main game logic
+├── src/                       # Implementation files
+│   └── game.cxx               # Game engine
+├── examples/                  # Example programs
+│   └── main.cxx               # SDL2 interactive game
+└── CMakeLists.txt             # Build configuration
 ```
 
-## Building on macOS (M4)
+## Building on macOS (Apple Silicon)
 
 ### Prerequisites
 
@@ -37,54 +40,58 @@ starship-game/
 # Install Xcode Command Line Tools
 xcode-select --install
 
-# Install CMake via Homebrew
-brew install cmake
+# Install CMake and SDL2 via Homebrew
+brew install cmake sdl2 sdl2_ttf
 ```
 
 ### Build Instructions
 
 ```bash
-# Clone the repository (or navigate to your project)
+# Navigate to project
 cd starship-game
 
-# Create build directory
+# Create and enter build directory
 mkdir build
 cd build
 
-# Configure for Apple Silicon
+# Configure and build
 cmake ..
-
-# Build
-make
+make -j2
 
 # Run the game
-./starship-terminal
+./starship-game
 ```
 
 ## How to Play
 
 ### Controls
 
-- **W** - Thrust forward
-- **A** - Rotate left
-- **D** - Rotate right
-- **SPACE** - Shoot
+- **A** - Move rocket left
+- **D** - Move rocket right
+- **SPACE** - Fire projectiles upward
 - **Q** - Quit game
-- **R** - Restart (after game over)
 
 ### Gameplay
 
-1. Destroy asteroids to earn points
-2. Avoid collisions with asteroids (you have 3 lives)
-3. Large asteroids split into medium, medium into small
-4. Clear all asteroids to advance to the next level
-5. Each level spawns more asteroids
+1. **Rocket Position**: Your rocket is fixed at the bottom center of the screen
+2. **Asteroid Waves**: Asteroids continuously spawn at the top and fall downward
+3. **Destroy Asteroids**: Fire projectiles straight up to destroy asteroids
+4. **Scoring**: Each asteroid destroyed = 1 point
+5. **Lives**: Start with 3 lives. Lose a life when an asteroid touches your rocket
+6. **Game Over**: Lose all 3 lives → game ends with final statistics displayed for 3 seconds
+7. **Progressive Difficulty**: Asteroids spawn more frequently as you progress through levels
 
-### Scoring
+### Asteroid Types
 
-- Large asteroids: 20 points
-- Medium asteroids: 50 points
-- Small asteroids: 100 points
+- **Large Asteroids** (20px radius): Spawn at top, fall downward
+- **Medium Asteroids** (12px radius): Created when large asteroids are destroyed
+- **Small Asteroids** (6px radius): Created when medium asteroids are destroyed
+
+### Scoring System
+
+- **1 point** per asteroid destroyed (regardless of size)
+- Score displayed at top center of screen
+- Lives counter shown next to score
 
 ## Library Usage
 
@@ -94,10 +101,12 @@ You can use the starship library in your own projects:
 #include "starship/game.hpp"
 
 int main() {
-    starship::Game game(80, 30);  // 80x30 game field
+    int width = 800, height = 600;
+    starship::Game game(width, height);
     
-    while (!game.isGameOver()) {
-        game.handleInput(getUserInput(), deltaTime);
+    // Your game loop with SDL2
+    while (game.isActive()) {
+        game.handleInput(events, deltaTime);
         game.update(deltaTime);
         
         // Render using your own renderer
@@ -108,7 +117,7 @@ int main() {
 }
 ```
 
-Link against the library:
+Link against the library in CMake:
 
 ```cmake
 target_link_libraries(your_program PRIVATE starship)
@@ -118,18 +127,40 @@ target_link_libraries(your_program PRIVATE starship)
 
 ### Core Classes
 
-- **Vector2D**: 2D math operations (addition, multiplication, normalization)
-- **Entity**: Base class for all game objects with position, velocity, collision
-- **Starship**: Player-controlled ship with rotation, thrust, and shooting
-- **Asteroid**: Floating space rocks that split when destroyed
-- **Projectile**: Bullets fired by the player
-- **Game**: Main game loop, collision detection, entity management
+- **Vector2D**: 2D math operations (addition, subtraction, scalar multiplication, normalization, distance)
+- **Entity**: Base class for all game objects with position, velocity, collision detection
+- **Starship**: Player-controlled rocket fixed at bottom center with left/right movement
+- **Asteroid**: Space rocks that spawn at top and fall downward; split into smaller asteroids when destroyed
+- **Projectile**: Projectiles fired straight upward with 2-second lifetime
+- **Game**: Main game engine managing entities, collision detection, continuous asteroid spawning, and scoring
 
 ### Design Patterns
 
-- **Inheritance**: Entity base class for polymorphic behavior
+- **Inheritance**: Entity base class for polymorphic behavior (Starship, Asteroid, Projectile)
 - **Composition**: Game contains collections of entities
-- **Separation of Concerns**: Game logic separate from rendering
+- **Separation of Concerns**: Game logic separate from rendering (SDL2 in examples/main.cxx)
+- **Delta-time physics**: Frame-rate independent movement and updates
+
+### Gameplay Physics
+
+- **Asteroid Spawning**: Continuous spawn timer (every 2 seconds at difficulty 1)
+  - Spawn rate increases with level progression
+  - Asteroids spawn randomly across top of screen
+  - Fall straight down at constant velocity
+- **Projectiles**: Fired straight upward with fixed velocity
+  - Auto-deactivate after 2 seconds or leaving screen bounds
+- **Collision Detection**: Circular bounding boxes for all entities
+- **Screen Boundaries**: Asteroids and projectiles deactivate when leaving visible area
+
+## Rendering Details (SDL2)
+
+The main game example uses SDL2 for graphics rendering:
+
+- **Rocket**: Detailed sprite with white nose cone, main body, light blue fins, and yellow/orange flame effect
+- **Asteroids**: Gray circles rendered with line segments
+- **Projectiles**: Small yellow/orange triangular fire effects
+- **HUD**: Score and lives counter displayed at top center in white text
+- **Game Over**: Red text display with final score and level reached, stays visible for 3 seconds before exit
 
 ## Future Enhancements
 
@@ -137,11 +168,18 @@ Potential additions to the library:
 
 1. **Power-ups**: Shield, rapid fire, extra lives
 2. **Enemy ships**: AI-controlled opponents
-3. **Particle effects**: Explosions and debris
-4. **Sound system**: Abstract audio interface
-5. **Save/load**: High scores and game state
-6. **Multiplayer**: Network support
-7. **Better renderers**: SDL2, SFML, or OpenGL backends
+3. **Particle effects**: Enhanced explosions and debris
+4. **Sound system**: Audio effects for shots and collisions
+5. **Save/load**: High scores tracking
+6. **Alternative renderers**: SFML, OpenGL backends
+7. **Touch controls**: Mobile/tablet input support
+
+## Requirements
+
+- **C++17** or later
+- **CMake 3.15+**
+- **SDL2** and **SDL2_ttf** (for graphics and text rendering)
+- **macOS** with Apple Silicon (arm64) or Intel processors
 
 ## License
 
@@ -149,4 +187,4 @@ MIT License - feel free to use this in your own projects!
 
 ## Credits
 
-Created as a demonstration of C++ game library architecture for macOS M4.
+Developed as a modern C++ implementation of the classic Asteroids arcade game.
