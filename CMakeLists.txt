@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
 project(starship-game VERSION 1.0.0 LANGUAGES CXX)
 
+# Use libc++ on Apple Silicon BEFORE any other configuration
+if(APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" CACHE STRING "" FORCE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
+endif()
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Compiler flags
-if(APPLE)
-    # For Apple Silicon M4 (ARM64)
-    set(CMAKE_OSX_ARCHITECTURES "arm64")
-endif()
 
 # Add compile warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -58,6 +58,9 @@ target_link_directories(starship-terminal PRIVATE
 )
 target_link_libraries(starship-terminal PRIVATE starship ${SDL2_LIBRARIES} SDL2_ttf)
 
+# Include test configuration
+include(test_CMakeLists.txt)
+
 # Installation rules
 install(TARGETS starship
     ARCHIVE DESTINATION lib
@@ -74,3 +77,4 @@ message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 if(APPLE)
     message(STATUS "Target Architecture: ${CMAKE_OSX_ARCHITECTURES}")
 endif()
+  

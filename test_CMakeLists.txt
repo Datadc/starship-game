@@ -1,0 +1,93 @@
+# test_CMakeLists.txt
+
+# Enable testing
+enable_testing()
+
+# Fetch Google Test from GitHub
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+
+# Configure gtest build settings to match your project
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "" FORCE)
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "" FORCE)
+
+# Build gtest
+FetchContent_MakeAvailable(googletest)
+
+# On macOS, ensure GoogleTest itself is compiled/linked against libc++
+if(APPLE)
+    foreach(target gtest gtest_main gmock gmock_main)
+        if(TARGET ${target})
+            target_compile_options(${target} PRIVATE "-stdlib=libc++")
+            target_link_options(${target} PRIVATE "-stdlib=libc++")
+        endif()
+    endforeach()
+endif()
+
+# Include GoogleTest module for gtest_discover_tests (must be after MakeAvailable)
+include(GoogleTest)
+
+# Test executable
+add_executable(starship_tests
+    tests/game_test.cxx
+)
+
+# Link test executable with gtest and starship library
+target_link_libraries(starship_tests
+    PRIVATE
+        starship
+        gtest_main
+        gtest
+)
+
+# On macOS (especially Apple Silicon), ensure the test target links against
+# libc++ to resolve internal libc++ symbols (e.g. __hash_memory) when
+# GoogleTest or other objects reference them.
+if(APPLE)
+    # Ensure test target and project library use libc++ on macOS
+    target_compile_options(starship_tests PRIVATE "-stdlib=libc++")
+    # Also ensure the main library is compiled with the same stdlib
+    if(TARGET starship)
+        target_compile_options(starship PRIVATE "-stdlib=libc++")
+    endif()
+    # Link against Homebrew LLVM's libc++ and libc++abi directly
+    # They are located in /opt/homebrew/Cellar/llvm/*/lib/c++/ 
+    find_library(HOMEBREW_LIBCPP 
+        NAMES c++.1.0 c++
+        PATHS /opt/homebrew/Cellar/llvm/*/lib/c++ /opt/homebrew/opt/llvm/lib/c++ 
+        NO_DEFAULT_PATH
+    )
+    find_library(HOMEBREW_LIBCPPABI 
+        NAMES c++abi.1.0 c++abi
+        PATHS /opt/homebrew/Cellar/llvm/*/lib/c++ /opt/homebrew/opt/llvm/lib/c++
+        NO_DEFAULT_PATH
+    )
+    
+    if(HOMEBREW_LIBCPP AND HOMEBREW_LIBCPPABI)
+        message(STATUS "Using Homebrew libc++: ${HOMEBREW_LIBCPP}")
+        message(STATUS "Using Homebrew libc++abi: ${HOMEBREW_LIBCPPABI}")
+        target_link_libraries(starship_tests PRIVATE ${HOMEBREW_LIBCPP} ${HOMEBREW_LIBCPPABI})
+    else()
+        message(WARNING "Homebrew libc++ not found, falling back to system libraries")
+        target_link_libraries(starship_tests PRIVATE "-lc++" "-lc++abi")
+    endif()
+endif()
+
+# Ensure consistent C++ standard
+set_target_properties(starship_tests PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+)
+
+# Include directories for tests
+target_include_directories(starship_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Register tests
+gtest_discover_tests(starship_tests)
