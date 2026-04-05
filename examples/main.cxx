@@ -135,6 +135,22 @@ int main() {
         float px = player.getPosition().x;
         float py = player.getPosition().y;
         
+        // Shield effect (cyan glow around player)
+        if (game.isShielded()) {
+            SDL_SetRenderDrawColor(renderer, 0, 255, 255, 100);  // Semi-transparent cyan
+            float shieldRadius = 25.0f;
+            int segments = 16;
+            for (int i = 0; i < segments; i++) {
+                float angle1 = 2.0f * 3.14159f * i / segments;
+                float angle2 = 2.0f * 3.14159f * (i + 1) / segments;
+                float x1 = px + shieldRadius * std::cos(angle1);
+                float y1 = py + shieldRadius * std::sin(angle1);
+                float x2 = px + shieldRadius * std::cos(angle2);
+                float y2 = py + shieldRadius * std::sin(angle2);
+                SDL_RenderDrawLineF(renderer, x1, y1, x2, y2);
+            }
+        }
+        
         // Rocket: nose cone, body, fins, and flame
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);  // White body
         
@@ -215,6 +231,27 @@ int main() {
             }
         }
 
+        // Draw power-ups as colored circles
+        for (const auto& powerUp : game.getPowerUps()) {
+            float r = powerUp.getRadius();
+            float px = powerUp.getPosition().x;
+            float py = powerUp.getPosition().y;
+            auto color = powerUp.getColor();
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            
+            // Draw as circle using multiple line segments
+            int segments = 8;
+            for (int i = 0; i < segments; i++) {
+                float angle1 = 2.0f * 3.14159f * i / segments;
+                float angle2 = 2.0f * 3.14159f * (i + 1) / segments;
+                float x1 = px + r * std::cos(angle1);
+                float y1 = py + r * std::sin(angle1);
+                float x2 = px + r * std::cos(angle2);
+                float y2 = py + r * std::sin(angle2);
+                SDL_RenderDrawLineF(renderer, x1, y1, x2, y2);
+            }
+        }
+
         // Draw projectiles as fire (small flame shapes - orange to yellow gradient) - LARGER
         for (const auto& projectile : game.getProjectiles()) {
             float prx = projectile.getPosition().x;
@@ -257,6 +294,24 @@ int main() {
             std::ostringstream livesStream;
             livesStream << "Lives: " << game.getPlayer().getHealth();
             renderText(renderer, font, livesStream.str(), SCREEN_WIDTH / 2 - 40, 40);
+            
+            // Display active power-ups
+            int powerUpY = 70;
+            if (game.isShielded()) {
+                SDL_Color cyan = {0, 255, 255, 255};
+                renderText(renderer, font, "SHIELD", 10, powerUpY, cyan);
+                powerUpY += 30;
+            }
+            if (game.hasMultiShot()) {
+                SDL_Color magenta = {255, 0, 255, 255};
+                renderText(renderer, font, "MULTI-SHOT", 10, powerUpY, magenta);
+                powerUpY += 30;
+            }
+            if (game.hasRapidFire()) {
+                SDL_Color yellow = {255, 255, 0, 255};
+                renderText(renderer, font, "RAPID FIRE", 10, powerUpY, yellow);
+                powerUpY += 30;
+            }
             
             // Display game over message when lives exhausted
             if (game.isGameOver()) {

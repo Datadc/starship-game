@@ -4,6 +4,7 @@
 #include "starship.hxx"
 #include "asteroid.hxx"
 #include "projectile.hxx"
+#include "powerup.hxx"
 #include <vector>
 #include <memory>
 #include <random>
@@ -15,6 +16,7 @@ private:
     Starship player;
     std::vector<Asteroid> asteroids;
     std::vector<Projectile> projectiles;
+    std::vector<PowerUp> powerUps;
     
     int score;
     int level;
@@ -29,6 +31,11 @@ private:
     float spawnTimer;
     const float spawnInterval = 2.0f;  // Spawn new asteroid every 2 seconds
     
+    // Power-up effect timers
+    float shieldTimer;
+    float multiShotTimer;
+    float rapidFireTimer;
+    
     bool gameOver;
 
 public:
@@ -39,7 +46,9 @@ public:
     
     void spawnAsteroids(int count);
     void spawnAsteroid(const Vector2D& pos, const Vector2D& vel, Asteroid::Size size);
+    void spawnPowerUp(const Vector2D& pos);
     void shootProjectile();
+    void applyPowerUp(PowerUp::Type type);
     
     void checkCollisions();
     void removeInactiveEntities();
@@ -49,12 +58,17 @@ public:
     Starship& getPlayer() { return player; }
     const std::vector<Asteroid>& getAsteroids() const { return asteroids; }
     const std::vector<Projectile>& getProjectiles() const { return projectiles; }
+    const std::vector<PowerUp>& getPowerUps() const { return powerUps; }
     
     int getScore() const { return score; }
     int getLevel() const { return level; }
     bool isGameOver() const { return gameOver; }
     float getWidth() const { return width; }
     float getHeight() const { return height; }
+    
+    bool isShielded() const { return shieldTimer > 0; }
+    bool hasMultiShot() const { return multiShotTimer > 0; }
+    bool hasRapidFire() const { return rapidFireTimer > 0; }
     
     void reset();
 };

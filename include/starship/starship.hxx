@@ -79,6 +79,10 @@ public:
         }
     }
 
+    void restoreHealth() {
+        health++;
+    }
+
     void respawn(const Vector2D& pos) {
         position = pos;
         velocity = Vector2D(0, 0);

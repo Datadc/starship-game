@@ -13,6 +13,9 @@ Game::Game(float width, float height)
       rng(std::random_device{}()),
       shootCooldown(0.0f),
       spawnTimer(0.0f),
+      shieldTimer(0.0f),
+      multiShotTimer(0.0f),
+      rapidFireTimer(0.0f),
       gameOver(false) {
     spawnAsteroids(8);
 }
@@ -49,6 +52,21 @@ void Game::update(float deltaTime) {
             projectile.setActive(false);
         }
     }
+    
+    // Update power-ups
+    for (auto& powerUp : powerUps) {
+        powerUp.update(deltaTime);
+        powerUp.wrapScreen(width, height);  // Allow horizontal wrapping
+        // Deactivate if off bottom of screen
+        if (powerUp.getPosition().y > height + 50) {
+            powerUp.setActive(false);
+        }
+    }
+    
+    // Update power-up timers
+    if (shieldTimer > 0) shieldTimer -= deltaTime;
+    if (multiShotTimer > 0) multiShotTimer -= deltaTime;
+    if (rapidFireTimer > 0) rapidFireTimer -= deltaTime;
     
     checkCollisions();
     removeInactiveEntities();
@@ -93,9 +111,10 @@ void Game::handleInput(char input, float deltaTime) {
             player.thrust(deltaTime);
             break;
         case ' ':
+            float currentShootDelay = hasRapidFire() ? shootDelay * 0.5f : shootDelay;
             if (shootCooldown <= 0) {
                 shootProjectile();
-                shootCooldown = shootDelay;
+                shootCooldown = currentShootDelay;
             }
             break;
     }
@@ -122,14 +141,59 @@ void Game::spawnAsteroid(const Vector2D& pos, const Vector2D& vel, Asteroid::Siz
     asteroids.emplace_back(pos, vel, size);
 }
 
+void Game::spawnPowerUp(const Vector2D& pos) {
+    std::uniform_int_distribution<int> typeDist(0, 3);
+    PowerUp::Type type = static_cast<PowerUp::Type>(typeDist(rng));
+    powerUps.emplace_back(pos, type);
+    
+    // Give the last added power-up some velocity
+    if (!powerUps.empty()) {
+        std::uniform_real_distribution<float> horizontalVel(-15.0f, 15.0f);
+        powerUps.back().setVelocity(Vector2D(horizontalVel(rng), 80.0f));  // Faster downward movement
+    }
+}
+
+void Game::applyPowerUp(PowerUp::Type type) {
+    const float effectDuration = 8.0f;  // 8 seconds
+    
+    switch (type) {
+        case PowerUp::Type::SHIELD:
+            shieldTimer = effectDuration;
+            break;
+        case PowerUp::Type::MULTI_SHOT:
+            multiShotTimer = effectDuration;
+            break;
+        case PowerUp::Type::RAPID_FIRE:
+            rapidFireTimer = effectDuration;
+            break;
+        case PowerUp::Type::EXTRA_LIFE:
+            if (player.getHealth() < 5) {  // Max 5 lives
+                player.restoreHealth();
+            }
+            break;
+    }
+}
+
 void Game::shootProjectile() {
     if (!player.isActive()) return;
     
     // Projectiles always shoot upward (negative y direction)
     Vector2D pos = player.getPosition();
-    Vector2D vel(0.0f, -300.0f);  // Upward only, no side direction
     
-    projectiles.emplace_back(pos, vel);
+    if (multiShotTimer > 0) {
+        // Multi-shot: 3 projectiles in spread
+        Vector2D velCenter(0.0f, -300.0f);
+        Vector2D velLeft(-50.0f, -300.0f);
+        Vector2D velRight(50.0f, -300.0f);
+        
+        projectiles.emplace_back(pos, velLeft);
+        projectiles.emplace_back(pos, velCenter);
+        projectiles.emplace_back(pos, velRight);
+    } else {
+        // Normal shot
+        Vector2D vel(0.0f, -300.0f);
+        projectiles.emplace_back(pos, vel);
+    }
 }
 
 void Game::checkCollisions() {
@@ -144,6 +208,12 @@ void Game::checkCollisions() {
                 projectile.setActive(false);
                 asteroid.setActive(false);
                 score += asteroid.getPoints();
+                
+                // Chance to spawn power-up when asteroid is destroyed
+                std::uniform_real_distribution<float> powerUpChance(0.0f, 1.0f);
+                if (powerUpChance(rng) < 0.15f) {  // 15% chance
+                    spawnPowerUp(asteroid.getPosition());
+                }
                 
                 // Split asteroid if possible
                 if (asteroid.canSplit()) {
@@ -163,8 +233,21 @@ void Game::checkCollisions() {
         }
     }
     
-    // Check player-asteroid collisions
+    // Check player-power-up collisions
     if (player.isActive()) {
+        for (auto& powerUp : powerUps) {
+            if (!powerUp.isActive()) continue;
+            
+            if (player.collidesWith(powerUp)) {
+                powerUp.setActive(false);
+                applyPowerUp(powerUp.getType());
+                break;
+            }
+        }
+    }
+    
+    // Check player-asteroid collisions
+    if (player.isActive() && !isShielded()) {
         for (auto& asteroid : asteroids) {
             if (!asteroid.isActive()) continue;
             
@@ -193,16 +276,26 @@ void Game::removeInactiveEntities() {
             [](const Projectile& p) { return !p.isActive(); }),
         projectiles.end()
     );
+    
+    powerUps.erase(
+        std::remove_if(powerUps.begin(), powerUps.end(),
+            [](const PowerUp& p) { return !p.isActive(); }),
+        powerUps.end()
+    );
 }
 
 void Game::reset() {
     player = Starship(Vector2D(width / 2, height / 2));
     asteroids.clear();
     projectiles.clear();
+    powerUps.clear();
     score = 0;
     level = 1;
     shootCooldown = 0.0f;
     spawnTimer = 0.0f;
+    shieldTimer = 0.0f;
+    multiShotTimer = 0.0f;
+    rapidFireTimer = 0.0f;
     gameOver = false;
     spawnAsteroids(8);
 }
