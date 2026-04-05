@@ -11,6 +11,9 @@ A classic asteroids-style space shooter game implemented in C++ with SDL2 graphi
 - **Continuous wave spawning** with asteroids appearing at top of screen
 - **Score and lives tracking** with HUD display
 - **Detailed rocket graphics** with nose cone, body, fins, and flame effects
+- **Power-up system** with Shield, Multi-Shot, Rapid Fire, and Extra Life
+- **Collectible gameplay** with drifting power-up spheres
+- **Visual effect indicators** for active power-ups
 - **Game-over screen** with final statistics
 - **Extensible architecture** - easily add new entity types or renderers
 
@@ -24,6 +27,7 @@ starship-game/
 │   ├── starship.hxx           # Player rocket
 │   ├── asteroid.hxx           # Asteroid objects with size tiers
 │   ├── projectile.hxx         # Projectiles (bullets)
+│   ├── powerup.hxx            # Power-up collectibles
 │   └── game.hxx               # Main game logic
 ├── src/                       # Implementation files
 │   └── game.cxx               # Game engine
@@ -76,10 +80,22 @@ make -j2
 1. **Rocket Position**: Your rocket is fixed at the bottom center of the screen
 2. **Asteroid Waves**: Asteroids continuously spawn at the top and fall downward
 3. **Destroy Asteroids**: Fire projectiles straight up to destroy asteroids
-4. **Scoring**: Each asteroid destroyed = 1 point
-5. **Lives**: Start with 3 lives. Lose a life when an asteroid touches your rocket
-6. **Game Over**: Lose all 3 lives → game ends with final statistics displayed for 3 seconds
-7. **Progressive Difficulty**: Asteroids spawn more frequently as you progress through levels
+4. **Collect Power-ups**: Colored spheres drift down - fly into them to collect
+5. **Scoring**: Each asteroid destroyed = 1 point
+6. **Lives**: Start with 3 lives. Lose a life when an asteroid touches your rocket
+7. **Game Over**: Lose all 3 lives → game ends with final statistics displayed for 3 seconds
+8. **Progressive Difficulty**: Asteroids spawn more frequently as you progress through levels
+
+### Power-Up System
+
+Destroy asteroids to spawn collectible power-ups that drift downward:
+
+- **🛡️ Shield** (Cyan): Temporary invincibility - asteroids can't damage you
+- **🔫 Multi-Shot** (Magenta): Fire 3 projectiles in a spread pattern
+- **⚡ Rapid Fire** (Yellow): Double firing rate for faster shooting
+- **❤️ Extra Life** (Green): Restore 1 health point (maximum 5 lives)
+
+**Active Effects**: Displayed at top-left of screen with colored text and visual indicators
 
 ### Asteroid Types
 
@@ -132,7 +148,8 @@ target_link_libraries(your_program PRIVATE starship)
 - **Starship**: Player-controlled rocket fixed at bottom center with left/right movement
 - **Asteroid**: Space rocks that spawn at top and fall downward; split into smaller asteroids when destroyed
 - **Projectile**: Projectiles fired straight upward with 2-second lifetime
-- **Game**: Main game engine managing entities, collision detection, continuous asteroid spawning, and scoring
+- **PowerUp**: Collectible items that drift down with special effects (Shield, Multi-Shot, Rapid Fire, Extra Life)
+- **Game**: Main game engine managing entities, collision detection, continuous asteroid spawning, power-up spawning, and scoring
 
 ### Design Patterns
 
@@ -147,32 +164,45 @@ target_link_libraries(your_program PRIVATE starship)
   - Spawn rate increases with level progression
   - Asteroids spawn randomly across top of screen
   - Fall straight down at constant velocity
+- **Power-up Spawning**: 15% chance when asteroids are destroyed
+  - 4 types: Shield, Multi-Shot, Rapid Fire, Extra Life
+  - Drift downward with horizontal movement for collectible gameplay
+  - 10-second lifetime before disappearing
 - **Projectiles**: Fired straight upward with fixed velocity
   - Auto-deactivate after 2 seconds or leaving screen bounds
+  - Multi-Shot power-up creates 3-projectile spread pattern
 - **Collision Detection**: Circular bounding boxes for all entities
 - **Screen Boundaries**: Asteroids and projectiles deactivate when leaving visible area
+- **Power-up Effects**: Temporary abilities with 8-second duration
 
 ## Rendering Details (SDL2)
 
 The main game example uses SDL2 for graphics rendering:
 
 - **Rocket**: Detailed sprite with white nose cone, main body, light blue fins, and yellow/orange flame effect
+- **Shield Effect**: Cyan glow circle around rocket when shield power-up is active
 - **Asteroids**: Gray circles rendered with line segments
-- **Projectiles**: Small yellow/orange triangular fire effects
-- **HUD**: Score and lives counter displayed at top center in white text
+- **Projectiles**: Small yellow/orange triangular fire effects (single or triple spread)
+- **Power-ups**: Colored circles that drift down:
+  - Shield: Cyan circles
+  - Multi-Shot: Magenta circles  
+  - Rapid Fire: Yellow circles
+  - Extra Life: Green circles
+- **HUD**: Score and lives counter at top center, active power-up indicators at top-left
 - **Game Over**: Red text display with final score and level reached, stays visible for 3 seconds before exit
 
 ## Future Enhancements
 
 Potential additions to the library:
 
-1. **Power-ups**: Shield, rapid fire, extra lives
-2. **Enemy ships**: AI-controlled opponents
-3. **Particle effects**: Enhanced explosions and debris
-4. **Sound system**: Audio effects for shots and collisions
-5. **Save/load**: High scores tracking
-6. **Alternative renderers**: SFML, OpenGL backends
-7. **Touch controls**: Mobile/tablet input support
+1. **Enemy ships**: AI-controlled opponents with projectile firing
+2. **Particle effects**: Enhanced explosions and debris systems
+3. **Sound system**: Audio effects for shots, collisions, and power-up collection
+4. **Save/load system**: High scores tracking and game save states
+5. **Alternative renderers**: SFML, OpenGL backends
+6. **Touch controls**: Mobile/tablet input support
+7. **Boss battles**: Special enemy encounters at level milestones
+8. **Multiple weapons**: Upgradeable projectile types and patterns
 
 ## Requirements
 
