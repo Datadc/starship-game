@@ -2,87 +2,44 @@
 
 ## Overview
 
-`starship-game` is a C++17 arcade-style shooter inspired by Asteroids. The project is organized as a lightweight game engine library with a clear separation between game model, entity behavior, and rendering.
+`starship-game` is a small C++ arcade shooter with a clean separation between game logic and rendering.
 
-The core engine is implemented in `include/starship/` and `src/game.cxx`. The example application in `examples/main.cxx` is responsible for SDL2 rendering and input.
+The core engine lives in `include/starship/` and `src/game.cxx`. Rendering and input are handled by the SDL2 example in `examples/main.cxx`.
 
 ## Project Structure
 
 - `include/starship/`
-  - `Vector2D.hxx` - 2D math utilities used by all entities.
-  - `entity.hxx` - Base `Entity` class for position, velocity, collision, and screen wrapping.
-  - `starship.hxx` - Player rocket class with movement, thrust, health, and boundary constraints.
-  - `asteroid.hxx` - Asteroid entity with size tiers, point values, and split behavior.
-  - `projectile.hxx` - Projectile entity with lifetime and movement.
-  - `powerup.hxx` - Power-up entity with type, lifetime, and color metadata.
-  - `game.hxx` - Main game engine managing entity collections, spawning, collisions, and game state.
+  - core entity definitions and game model interfaces
 - `src/game.cxx`
-  - `Game` implementation, update loop, input handling, collision resolution, and reset logic.
+  - game engine implementation and update loop
 - `examples/main.cxx`
-  - Entry point and rendering layer using SDL2.
+  - SDL2 rendering and input integration
 - `CMakeLists.txt`
-  - Build configuration for the library and executable.
+  - build configuration
 
 ## Core Architecture
 
 ### Entity Model
 
-The engine is centered around an `Entity` base class that provides common functionality:
+The engine is built around an `Entity` base class for shared motion and collision behavior.
 
-- `position` and `velocity`
-- `radius` for circular collision detection
-- `active` state for lifecycle management
-- `update(deltaTime)` to apply movement
-- `collidesWith(other)` for circular collision tests
-- `wrapScreen(width, height)` for horizontal screen wrapping
+Derived entities are:
+- `Starship` — player-controlled rocket
+- `Asteroid` — falling obstacles that can fragment
+- `Projectile` — fired shots
+- `PowerUp` — collectible effects
 
-Derived entity classes include:
+### Game Engine
 
-- `Starship` - player-controlled rocket
-- `Asteroid` - falling rocks that split into smaller asteroids
-- `Projectile` - bullets fired upward
-- `PowerUp` - collectible bonuses with timed lifetime
+`starship::Game` owns the entity collections and game state.
 
-### Game Class
-
-`starship::Game` is the main engine. It contains:
-
-- `Starship player`
-- `std::vector<Asteroid> asteroids`
-- `std::vector<Projectile> projectiles`
-- `std::vector<PowerUp> powerUps`
-- score, level, width, height
-- random number generator for spawning
-- timers for spawn frequency, shooting cooldown, and active power-up effects
-- `bool gameOver`
-
-Key responsibilities:
-
-- `update(deltaTime)` - advances game simulation each frame
-- `handleInput(input, deltaTime)` - responds to player controls
-- `spawnAsteroids(int)` / `spawnAsteroid(...)` - continuous asteroid generation
-- `spawnPowerUp(...)` - creates collectible power-ups with random type
-- `shootProjectile()` - normal and multi-shot firing
-- `checkCollisions()` - resolves projectile/asteroid, player/power-up, and player/asteroid collisions
-- `removeInactiveEntities()` - cleans up dead objects
-- `reset()` - restarts game state
-
-### Gameplay Flow
-
-The engine follows a deterministic frame update:
-
-1. If the game is over, updates stop.
-2. Update shoot cooldown.
-3. Update player state, apply drag, and constrain horizontal movement.
-4. Update all asteroids, deactivate those falling off-screen.
-5. Update projectiles, deactivate out-of-bounds bullets.
-6. Update power-ups and wrap them horizontally.
-7. Update active power-up timers.
-8. Resolve collisions and spawn new game objects.
-9. Remove inactive entities from vectors.
-10. Spawn new asteroids continuously.
-11. Advance the level when all asteroids are cleared.
-12. Set `gameOver` when the player is destroyed and out of health.
+Its main responsibilities are:
+- updating all entities each frame
+- handling player input
+- spawning asteroids and power-ups
+- checking collisions
+- removing inactive objects
+- tracking score, level, and game-over state
 
 ## Architecture Diagrams
 
@@ -94,7 +51,6 @@ The engine follows a deterministic frame update:
 | Input /     |        |   Engine    |         |  (SDL2)     |
 | Controls    |        +-------------+         +-------------+
 +-------------+                |
-                               |
                                v
                       +-------------------+
                       |   Entity System   |
@@ -112,15 +68,6 @@ The engine follows a deterministic frame update:
 ```
         +------------------+
         |     Entity       |
-        |------------------|
-        | position         |
-        | velocity         |
-        | radius           |
-        | active           |
-        |------------------|
-        | update()         |
-        | collidesWith()   |
-        | wrapScreen()     |
         +------------------+
                  /|\
                 / | \
@@ -137,10 +84,6 @@ The engine follows a deterministic frame update:
                   +--------+      
                   | Game   |      
                   +--------+      
-                  | player |      
-                  | vectors|      
-                  +--------+      
-
 ```
 
 ### Frame Update Flow
@@ -152,47 +95,22 @@ The engine follows a deterministic frame update:
         |
         v
 +-------------------------+
-| Update shoot cooldown   |
+| Update game state       |
 +-------------------------+
         |
         v
 +-------------------------+
-| Update player state     |
+| Resolve collisions      |
 +-------------------------+
         |
         v
 +-------------------------+
-| Update asteroids        |
+| Remove inactive objects |
 +-------------------------+
         |
         v
 +-------------------------+
-| Update projectiles      |
-+-------------------------+
-        |
-        v
-+-------------------------+
-| Update power-ups        |
-+-------------------------+
-        |
-        v
-+-------------------------+
-| Check collisions        |
-+-------------------------+
-        |
-        v
-+-------------------------+
-| Remove inactive entities |
-+-------------------------+
-        |
-        v
-+-------------------------+
-| Spawn new asteroids     |
-+-------------------------+
-        |
-        v
-+-------------------------+
-| Advance level if clear  |
+| Spawn entities          |
 +-------------------------+
         |
         v
@@ -206,61 +124,20 @@ The engine follows a deterministic frame update:
 +-------------+
 ```
 
-## Entity Behavior
+## Key Concepts
 
-### Starship
+- `Entity` centralizes position, movement, and collision behavior.
+- `Game` is the orchestrator: it updates entities, applies input, and manages game progression.
+- Rendering is separate from game logic so the engine can be reused or extended.
+- Power-ups and asteroids are managed as active collections and removed when no longer needed.
 
-- Fixed bottom position in `applyBoundaries(width, height)`
-- Horizontal movement only (`moveLeft`, `moveRight`, `stopMoving`)
-- Optional thrust with a direction from `rotation`
-- Drag reduces velocity over time
-- Health tracked by `health`; `takeDamage()` deactivates when health reaches zero
-- `restoreHealth()` supports extra life power-ups
+## Essential Flows
 
-### Asteroid
-
-- Three sizes: `LARGE`, `MEDIUM`, `SMALL`
-- Radii: 20, 12, and 6
-- `getPoints()` returns score values per size
-- `canSplit()` and `getNextSize()` determine fragmenting behavior
-- When destroyed by a projectile, large/medium asteroids split into two smaller asteroids
-
-### Projectile
-
-- Lifetime-limited to 2 seconds
-- Straight upward movement
-- Deactivates on leaving the visible screen
-
-### PowerUp
-
-- Four types: `SHIELD`, `MULTI_SHOT`, `RAPID_FIRE`, `EXTRA_LIFE`
-- Lifetime of 10 seconds on-screen
-- Colored metadata is available for rendering
-- Each power-up drifts downward with optional horizontal velocity
-
-## Collision and Power-Up Systems
-
-### Collision handling
-
-- `Entity::collidesWith()` uses circular collision via distance and radii
-- Projectiles vs asteroids:
-  - projectiles deactivate on hit
-  - asteroids deactivate, award score, optionally spawn a power-up
-  - asteroids split if not small
-- Player vs power-ups:
-  - collects power-up and activates its ability
-- Player vs asteroid:
-  - if not shielded, damage is applied
-  - player respawns if health remains
-  - asteroid is removed
-
-### Power-up effects
-
-- `SHIELD` - temporary invincibility
-- `MULTI_SHOT` - fires three projectiles in a spread
-- `RAPID_FIRE` - decreases shoot cooldown by 50%
-- `EXTRA_LIFE` - restores health, capped at 5 lives
-- All active effects last 8 seconds
+- Player input goes into `Game`, which updates the `Starship`.
+- `Game` updates all entity lists every frame.
+- Collisions are resolved inside the engine; effects are applied, and objects are marked inactive.
+- Inactive objects are cleaned up before the next frame.
+- Asteroids and power-ups are spawned dynamically to sustain gameplay.
 
 ## Spawning and Difficulty
 
