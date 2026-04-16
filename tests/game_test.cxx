@@ -110,24 +110,32 @@ TEST_F(GameTest, PowerUpEffects) {
     EXPECT_FALSE(game.isShielded());
     EXPECT_FALSE(game.hasMultiShot());
     EXPECT_FALSE(game.hasRapidFire());
+    EXPECT_FALSE(game.hasSpeedBoost());
 
     // Apply shield effect
     game.applyPowerUp(starship::PowerUp::Type::SHIELD);
     EXPECT_TRUE(game.isShielded());
     EXPECT_FALSE(game.hasMultiShot());
     EXPECT_FALSE(game.hasRapidFire());
+    EXPECT_FALSE(game.hasSpeedBoost());
 
     // Apply multi-shot effect
     game.applyPowerUp(starship::PowerUp::Type::MULTI_SHOT);
     EXPECT_TRUE(game.isShielded());  // Shield still active
     EXPECT_TRUE(game.hasMultiShot());
     EXPECT_FALSE(game.hasRapidFire());
+    EXPECT_FALSE(game.hasSpeedBoost());
 
     // Apply rapid fire effect
     game.applyPowerUp(starship::PowerUp::Type::RAPID_FIRE);
     EXPECT_TRUE(game.isShielded());
     EXPECT_TRUE(game.hasMultiShot());
     EXPECT_TRUE(game.hasRapidFire());
+    EXPECT_FALSE(game.hasSpeedBoost());
+
+    // Apply speed boost effect
+    game.applyPowerUp(starship::PowerUp::Type::SPEED_BOOST);
+    EXPECT_TRUE(game.hasSpeedBoost());
 }
 
 TEST_F(GameTest, PowerUpTimers) {
@@ -138,11 +146,13 @@ TEST_F(GameTest, PowerUpTimers) {
     game.applyPowerUp(starship::PowerUp::Type::SHIELD);
     game.applyPowerUp(starship::PowerUp::Type::MULTI_SHOT);
     game.applyPowerUp(starship::PowerUp::Type::RAPID_FIRE);
+    game.applyPowerUp(starship::PowerUp::Type::SPEED_BOOST);
 
     // All effects should be active initially
     EXPECT_TRUE(game.isShielded());
     EXPECT_TRUE(game.hasMultiShot());
     EXPECT_TRUE(game.hasRapidFire());
+    EXPECT_TRUE(game.hasSpeedBoost());
 
     // Update for 4 seconds (half the effect duration)
     for (int i = 0; i < 4; ++i) {
@@ -153,6 +163,7 @@ TEST_F(GameTest, PowerUpTimers) {
     EXPECT_TRUE(game.isShielded());
     EXPECT_TRUE(game.hasMultiShot());
     EXPECT_TRUE(game.hasRapidFire());
+    EXPECT_TRUE(game.hasSpeedBoost());
 
     // Update for another 5 seconds (total 9 seconds)
     for (int i = 0; i < 5; ++i) {
@@ -163,6 +174,7 @@ TEST_F(GameTest, PowerUpTimers) {
     EXPECT_FALSE(game.isShielded());
     EXPECT_FALSE(game.hasMultiShot());
     EXPECT_FALSE(game.hasRapidFire());
+    EXPECT_FALSE(game.hasSpeedBoost());
 }
 
 TEST_F(GameTest, ExtraLifePowerUp) {
