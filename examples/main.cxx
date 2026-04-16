@@ -312,6 +312,11 @@ int main() {
                 renderText(renderer, font, "RAPID FIRE", 10, powerUpY, yellow);
                 powerUpY += 30;
             }
+            if (game.hasSpeedBoost()) {
+                SDL_Color orange = {255, 165, 0, 255};
+                renderText(renderer, font, "SPEED BOOST", 10, powerUpY, orange);
+                powerUpY += 30;
+            }
             
             // Display game over message when lives exhausted
             if (game.isGameOver()) {

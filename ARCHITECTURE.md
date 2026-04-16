@@ -148,6 +148,7 @@ Its main responsibilities are:
 - Asteroid spawn position is random across the top of the screen
 - Horizontal velocity has a random drift component
 - Power-ups have a 15% spawn chance when an asteroid is destroyed
+- Supported power-up types: Shield, Multi-Shot, Rapid Fire, Speed Boost, Extra Life
 
 ## Rendering and Example Use
 

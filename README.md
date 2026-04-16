@@ -11,7 +11,7 @@ A classic asteroids-style space shooter game implemented in C++ with SDL2 graphi
 - **Continuous wave spawning** with asteroids appearing at top of screen
 - **Score and lives tracking** with HUD display
 - **Detailed rocket graphics** with nose cone, body, fins, and flame effects
-- **Power-up system** with Shield, Multi-Shot, Rapid Fire, and Extra Life
+- **Power-up system** with Shield, Multi-Shot, Rapid Fire, Speed Boost, and Extra Life
 - **Collectible gameplay** with drifting power-up spheres
 - **Visual effect indicators** for active power-ups
 - **Game-over screen** with final statistics
@@ -93,6 +93,7 @@ Destroy asteroids to spawn collectible power-ups that drift downward:
 - **🛡️ Shield** (Cyan): Temporary invincibility - asteroids can't damage you
 - **🔫 Multi-Shot** (Magenta): Fire 3 projectiles in a spread pattern
 - **⚡ Rapid Fire** (Yellow): Double firing rate for faster shooting
+- **🚀 Speed Boost** (Orange): Move faster and thrust harder for 5 seconds
 - **❤️ Extra Life** (Green): Restore 1 health point (maximum 5 lives)
 
 **Active Effects**: Displayed at top-left of screen with colored text and visual indicators
@@ -165,7 +166,7 @@ target_link_libraries(your_program PRIVATE starship)
   - Asteroids spawn randomly across top of screen
   - Fall straight down at constant velocity
 - **Power-up Spawning**: 15% chance when asteroids are destroyed
-  - 4 types: Shield, Multi-Shot, Rapid Fire, Extra Life
+  - 5 types: Shield, Multi-Shot, Rapid Fire, Speed Boost, Extra Life
   - Drift downward with horizontal movement for collectible gameplay
   - 10-second lifetime before disappearing
 - **Projectiles**: Fired straight upward with fixed velocity
@@ -173,7 +174,7 @@ target_link_libraries(your_program PRIVATE starship)
   - Multi-Shot power-up creates 3-projectile spread pattern
 - **Collision Detection**: Circular bounding boxes for all entities
 - **Screen Boundaries**: Asteroids and projectiles deactivate when leaving visible area
-- **Power-up Effects**: Temporary abilities with 8-second duration
+- **Power-up Effects**: Temporary abilities with 8-second duration, except Speed Boost which lasts 5 seconds
 
 ## Rendering Details (SDL2)
 
