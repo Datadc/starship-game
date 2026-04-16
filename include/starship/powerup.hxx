@@ -11,7 +11,8 @@ public:
         SHIELD,
         MULTI_SHOT,
         RAPID_FIRE,
-        EXTRA_LIFE
+        EXTRA_LIFE,
+        SPEED_BOOST
     };
 
 private:
@@ -45,11 +46,12 @@ public:
     
     Color getColor() const {
         switch (type) {
-            case Type::SHIELD:     return {0, 255, 255, 255};    // Cyan
-            case Type::MULTI_SHOT: return {255, 0, 255, 255};    // Magenta
-            case Type::RAPID_FIRE: return {255, 255, 0, 255};    // Yellow
-            case Type::EXTRA_LIFE: return {0, 255, 0, 255};      // Green
-            default:               return {255, 255, 255, 255};  // White
+            case Type::SHIELD:      return {0, 255, 255, 255};    // Cyan
+            case Type::MULTI_SHOT:  return {255, 0, 255, 255};    // Magenta
+            case Type::RAPID_FIRE:  return {255, 255, 0, 255};    // Yellow
+            case Type::EXTRA_LIFE:  return {0, 255, 0, 255};      // Green
+            case Type::SPEED_BOOST: return {255, 165, 0, 255};    // Orange
+            default:                return {255, 255, 255, 255};  // White
         }
     }
 };

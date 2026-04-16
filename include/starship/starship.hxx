@@ -38,13 +38,13 @@ public:
         velocity.x = 0;
     }
 
-    void thrust(float deltaTime) {
+    void thrust(float deltaTime, float multiplier = 1.0f) {
         // Apply thrust in the direction we're facing
         Vector2D thrustDir(std::cos(rotation), std::sin(rotation));
-        velocity += thrustDir * thrustPower * deltaTime;
+        velocity += thrustDir * thrustPower * multiplier * deltaTime;
         
         // Cap maximum speed
-        float maxSpeed = 40.0f;
+        float maxSpeed = 40.0f * multiplier;
         if (velocity.length() > maxSpeed) {
             velocity = velocity.normalized() * maxSpeed;
         }

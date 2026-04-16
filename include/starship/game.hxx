@@ -35,7 +35,7 @@ private:
     float shieldTimer;
     float multiShotTimer;
     float rapidFireTimer;
-    
+    float speedBoostTimer;
     bool gameOver;
 
 public:
@@ -69,7 +69,8 @@ public:
     bool isShielded() const { return shieldTimer > 0; }
     bool hasMultiShot() const { return multiShotTimer > 0; }
     bool hasRapidFire() const { return rapidFireTimer > 0; }
-    
+    bool hasSpeedBoost() const { return speedBoostTimer > 0; }
+
     void reset();
 };
 

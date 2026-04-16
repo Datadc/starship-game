@@ -67,6 +67,7 @@ void Game::update(float deltaTime) {
     if (shieldTimer > 0) shieldTimer -= deltaTime;
     if (multiShotTimer > 0) multiShotTimer -= deltaTime;
     if (rapidFireTimer > 0) rapidFireTimer -= deltaTime;
+    if (speedBoostTimer > 0) speedBoostTimer -= deltaTime;
     
     checkCollisions();
     removeInactiveEntities();
@@ -102,13 +103,13 @@ void Game::handleInput(char input, float deltaTime) {
     
     switch (input) {
         case 'a': case 'A':
-            player.moveLeft(150.0f);
+            player.moveLeft(hasSpeedBoost() ? 300.0f : 150.0f);
             break;
         case 'd': case 'D':
-            player.moveRight(150.0f);
+            player.moveRight(hasSpeedBoost() ? 300.0f : 150.0f);
             break;
         case 'w': case 'W':
-            player.thrust(deltaTime);
+            player.thrust(deltaTime, hasSpeedBoost() ? 2.0f : 1.0f);
             break;
         case ' ':
             float currentShootDelay = hasRapidFire() ? shootDelay * 0.5f : shootDelay;
@@ -142,7 +143,7 @@ void Game::spawnAsteroid(const Vector2D& pos, const Vector2D& vel, Asteroid::Siz
 }
 
 void Game::spawnPowerUp(const Vector2D& pos) {
-    std::uniform_int_distribution<int> typeDist(0, 3);
+    std::uniform_int_distribution<int> typeDist(0, 4);
     PowerUp::Type type = static_cast<PowerUp::Type>(typeDist(rng));
     powerUps.emplace_back(pos, type);
     
@@ -165,6 +166,9 @@ void Game::applyPowerUp(PowerUp::Type type) {
             break;
         case PowerUp::Type::RAPID_FIRE:
             rapidFireTimer = effectDuration;
+            break;
+        case PowerUp::Type::SPEED_BOOST:
+            speedBoostTimer = 5.0f;
             break;
         case PowerUp::Type::EXTRA_LIFE:
             if (player.getHealth() < 5) {  // Max 5 lives
