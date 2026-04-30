@@ -1,6 +1,8 @@
 // tests/game_test.cxx
 #include <gtest/gtest.h>
+#include <random>
 #include "starship/game.hxx"
+#include "starship/asteroid.hxx"
 #include "starship/powerup.hxx"
 
 class GameTest : public ::testing::Test {
@@ -260,4 +262,41 @@ TEST_F(GameTest, GameUpdate) {
     // Basic checks - game should still function
     EXPECT_GE(game.getAsteroids().size(), initialAsteroids);  // May spawn new asteroids
     EXPECT_EQ(game.getScore(), initialScore);  // Score shouldn't change without collisions
+}
+
+TEST_F(GameTest, AsteroidShapeGeneration) {
+    std::mt19937 rng(12345);
+    starship::Asteroid asteroid(starship::Vector2D(100.0f, 100.0f), starship::Vector2D(0.0f, 0.0f), starship::Asteroid::Size::LARGE, rng);
+
+    const auto& shape = asteroid.getShape();
+    EXPECT_EQ(shape.size(), 10u);
+    EXPECT_GT(shape.size(), 0u);
+
+    float minRadius = std::hypot(shape[0].x, shape[0].y);
+    float maxRadius = minRadius;
+    for (const auto& point : shape) {
+        float radius = std::hypot(point.x, point.y);
+        minRadius = std::min(minRadius, radius);
+        maxRadius = std::max(maxRadius, radius);
+    }
+    EXPECT_GT(maxRadius - minRadius, 0.01f);
+}
+
+TEST_F(GameTest, AsteroidSizeBasedVertexCounts) {
+    std::mt19937 rng(54321);
+    starship::Asteroid large(starship::Vector2D(0.0f, 0.0f), starship::Vector2D(0.0f, 0.0f), starship::Asteroid::Size::LARGE, rng);
+    starship::Asteroid medium(starship::Vector2D(0.0f, 0.0f), starship::Vector2D(0.0f, 0.0f), starship::Asteroid::Size::MEDIUM, rng);
+    starship::Asteroid small(starship::Vector2D(0.0f, 0.0f), starship::Vector2D(0.0f, 0.0f), starship::Asteroid::Size::SMALL, rng);
+
+    EXPECT_EQ(large.getShape().size(), 10u);
+    EXPECT_EQ(medium.getShape().size(), 8u);
+    EXPECT_EQ(small.getShape().size(), 6u);
+}
+
+TEST_F(GameTest, AsteroidRotationAdvancesOnUpdate) {
+    std::mt19937 rng(98765);
+    starship::Asteroid asteroid(starship::Vector2D(200.0f, 200.0f), starship::Vector2D(5.0f, 5.0f), starship::Asteroid::Size::MEDIUM, rng);
+    float initialRotation = asteroid.getRotation();
+    asteroid.update(0.5f);
+    EXPECT_NE(asteroid.getRotation(), initialRotation);
 }

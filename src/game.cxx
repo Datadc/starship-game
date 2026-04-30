@@ -16,6 +16,7 @@ Game::Game(float width, float height)
       shieldTimer(0.0f),
       multiShotTimer(0.0f),
       rapidFireTimer(0.0f),
+      speedBoostTimer(0.0f),
       gameOver(false) {
     spawnAsteroids(8);
 }
