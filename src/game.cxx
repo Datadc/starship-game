@@ -131,7 +131,8 @@ void Game::spawnAsteroids(int count) {
         
         // Velocity moves downward (positive y direction)
         float speed = speedDist(rng);
-        float horizontalAngle = (static_cast<float>(rand()) / RAND_MAX) * 0.4f - 0.2f; // Slight horizontal drift
+        std::uniform_real_distribution<float> angleDist(-0.2f, 0.2f);
+        float horizontalAngle = angleDist(rng); // Slight horizontal drift
         Vector2D vel(std::sin(horizontalAngle) * speed, speed);
         
         spawnAsteroid(pos, vel, Asteroid::Size::LARGE);
@@ -139,7 +140,7 @@ void Game::spawnAsteroids(int count) {
 }
 
 void Game::spawnAsteroid(const Vector2D& pos, const Vector2D& vel, Asteroid::Size size) {
-    asteroids.emplace_back(pos, vel, size);
+    asteroids.emplace_back(pos, vel, size, rng);
 }
 
 void Game::spawnPowerUp(const Vector2D& pos) {

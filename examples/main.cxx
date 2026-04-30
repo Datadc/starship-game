@@ -212,21 +212,22 @@ int main() {
         SDL_RenderDrawLineF(renderer, flameOrange[1].x, flameOrange[1].y, flameOrange[2].x, flameOrange[2].y);
         SDL_RenderDrawLineF(renderer, flameOrange[2].x, flameOrange[2].y, flameOrange[0].x, flameOrange[0].y);
 
-        // Draw asteroids as gray circles (approximated with lines as polygons)
+        // Draw asteroids as rotating, irregular polygons
         SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
         for (const auto& asteroid : game.getAsteroids()) {
-            float r = asteroid.getRadius();
+            const auto& shape = asteroid.getShape();
             float ax = asteroid.getPosition().x;
             float ay = asteroid.getPosition().y;
-            // Draw as circle using multiple line segments
-            int segments = 12;
-            for (int i = 0; i < segments; i++) {
-                float angle1 = 2.0f * 3.14159f * i / segments;
-                float angle2 = 2.0f * 3.14159f * (i + 1) / segments;
-                float x1 = ax + r * std::cos(angle1);
-                float y1 = ay + r * std::sin(angle1);
-                float x2 = ax + r * std::cos(angle2);
-                float y2 = ay + r * std::sin(angle2);
+            float rotation = asteroid.getRotation() * static_cast<float>(M_PI) / 180.0f;
+            float cosA = std::cos(rotation);
+            float sinA = std::sin(rotation);
+
+            for (size_t i = 0; i < shape.size(); ++i) {
+                size_t next = (i + 1) % shape.size();
+                float x1 = ax + (shape[i].x * cosA - shape[i].y * sinA);
+                float y1 = ay + (shape[i].x * sinA + shape[i].y * cosA);
+                float x2 = ax + (shape[next].x * cosA - shape[next].y * sinA);
+                float y2 = ay + (shape[next].x * sinA + shape[next].y * cosA);
                 SDL_RenderDrawLineF(renderer, x1, y1, x2, y2);
             }
         }
